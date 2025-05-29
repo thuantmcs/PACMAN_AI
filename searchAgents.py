@@ -360,48 +360,26 @@ class CornersProblem(search.SearchProblem):
         return len(actions)
 
 def cornersHeuristic(state, problem):
-    """
-    A heuristic for the CornersProblem that you defined.
+    position, visitedCorners = state
+    unvisited = [corner for corner in problem.corners if corner not in visitedCorners]
 
-      state:   The current search state
-               (a data structure you chose in your search problem)
+    if not unvisited:
+        return 0
 
-      problem: The CornersProblem instance for this layout.
+    # Greedy: luôn đi đến góc gần nhất
+    current = position
+    total_dist = 0
+    remaining = unvisited[:]
 
-    This function should always return a number that is a lower bound on the
-    shortest path from the state to a goal of the problem; i.e.  it should be
-    admissible (as well as consistent).
-    """
-    corners = problem.corners  # These are the corner coordinates
-    walls = problem.walls  # These are the walls of the dfs_maze, as a Grid (game.py)
+    while remaining:
+        distances = [(util.manhattanDistance(current, corner), corner) for corner in remaining]
+        min_dist, nearest_corner = min(distances)
+        total_dist += min_dist
+        current = nearest_corner
+        remaining.remove(nearest_corner)
 
-    "*** YOUR CODE HERE ***"
+    return total_dist
 
-    def unseen_corners(state):
-        visited_corners = set(state[1])
-        my_corners = set(corners)
-        return tuple(my_corners.difference(visited_corners))
-
-    def max_dis(unseen):
-        distances = []
-        for corner in unseen:
-            value = dfs_maze(state[0], corner)
-            distances.append(value)
-        if distances:
-            return max(distances)
-        else:
-            return 0
-
-    def dfs_maze(point1, point2):
-        x1, y1 = point1
-        x2, y2 = point2
-        assert not walls[x1][y1], 'point1 is a wall: ' + point1
-        assert not walls[x2][y2], 'point2 is a wall: ' + str(point2)
-        prob = PositionSearchProblem(problem.startingGameState, start=point1, goal=point2, warn=False)
-        return len(search.bfs(prob))
-
-    unseen = unseen_corners(state)
-    return max_dis(unseen)
     # return 0 # Default to trivial solution
 
 class AStarCornersAgent(SearchAgent):

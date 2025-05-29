@@ -48,6 +48,7 @@ from util import manhattanDistance
 import util, layout
 import sys, types, time, random, os
 import textDisplay
+
 ###################################################
 # YOUR INTERFACE TO THE PACMAN WORLD: A GameState #
 ###################################################
@@ -359,6 +360,14 @@ class PacmanRules:
             # Remove food
             PacmanRules.consume(nearest, state)
 
+            # Nếu ăn capsule (chấm lớn), thiết lập biến đếm
+            if nearest in state.data.capsules:
+                state.data.capsules.remove(nearest)
+                pacmanState.powerTimer = 40  # ví dụ: hiệu lực 40 bước
+
+        # Giảm biến đếm nếu còn hiệu lực
+        if pacmanState.powerTimer > 0:
+            pacmanState.powerTimer -= 1
     applyAction = staticmethod(applyAction)
 
     def consume(position, state):
@@ -417,7 +426,7 @@ class GhostRules:
         if ghostState.scaredTimer > 0: speed /= 2.0
         vector = Actions.directionToVector(action, speed)
         ghostState.configuration = ghostState.configuration.generateSuccessor(vector)
-
+        
     applyAction = staticmethod(applyAction)
 
     def decrementTimer(ghostState):

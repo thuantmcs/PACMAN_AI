@@ -22,78 +22,57 @@ from util import manhattanDistance
 import random
 
 class ReflexAgent(Agent):
-    def __init__(self):
-        self.lastPos = None
-        self.history = []
-
     def getAction(self, gameState):
-        legalMoves = gameState.getLegalActions()
-        if Directions.STOP in legalMoves:
-            legalMoves.remove(Directions.STOP)
 
+        # Collect legal moves and successor states
+        legalMoves = gameState.getLegalActions()
+
+        # Choose one of the best actions
         scores = [self.evaluationFunction(gameState, action) for action in legalMoves]
         bestScore = max(scores)
+        bestIndices = [index for index in range(len(scores)) if scores[index] == bestScore]
+        chosenIndex = random.choice(bestIndices)  # Pick randomly among the best
 
-        # Lọc những action có điểm cao nhất
-        bestIndices = [i for i, score in enumerate(scores) if score == bestScore]
+        "Add more of your code here if you want to"
 
-        # Nếu có nhiều action điểm bằng nhau, ưu tiên action không quay lại vị trí trước
-        filteredBest = []
-        for i in bestIndices:
-            successor = gameState.generatePacmanSuccessor(legalMoves[i])
-            pos = successor.getPacmanPosition()
-            if pos != self.lastPos:
-                filteredBest.append(i)
-
-        if len(filteredBest) == 0:
-            filteredBest = bestIndices
-
-        chosenIndex = random.choice(filteredBest)
-        chosenAction = legalMoves[chosenIndex]
-
-        # Cập nhật vị trí hiện tại để tránh đi lại
-        successor = gameState.generatePacmanSuccessor(chosenAction)
-        self.lastPos = successor.getPacmanPosition()
-
-        # Lưu lịch sử để tránh lặp nhiều bước
-        self.history.append(self.lastPos)
-        if len(self.history) > 5:
-            self.history.pop(0)
-
-        return chosenAction
+        return legalMoves[chosenIndex]
 
     def evaluationFunction(self, currentGameState, action):
-        successor = currentGameState.generatePacmanSuccessor(action)
-        newPos = successor.getPacmanPosition()
-        newFood = successor.getFood()
-        newGhostStates = successor.getGhostStates()
-        newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
+        successorGameState = currentGameState.generatePacmanSuccessor(action)
+        newPos = successorGameState.getPacmanPosition()
+        newFood = successorGameState.getFood().asList()
+        ghostStates = successorGameState.getGhostStates()
+        ghostPositions = [ghost.getPosition() for ghost in ghostStates]
 
-        # Khoảng cách tới ghost
-        ghostDistances = [manhattanDistance(newPos, ghostState.getPosition()) for ghostState in newGhostStates]
+        # LẤY THỜI GIAN POWER PELLET
+        power_time = successorGameState.getPacmanState().powerTimer
 
-        # Phạt ghost gần (khi không scared)
-        penalty = 0
-        for dist, scaredTime in zip(ghostDistances, newScaredTimes):
-            if scaredTime == 0 and dist <= 2:
-                penalty += 1000 / (dist + 0.1)  # càng gần càng phạt nhiều
-
-        # Tính khoảng cách thức ăn gần nhất
-        foodList = newFood.asList()
-        if foodList:
-            minFoodDist = min(manhattanDistance(newPos, food) for food in foodList)
-        else:
-            minFoodDist = 0
-
-        # Tổng điểm: ưu tiên tránh ghost, rồi tới thức ăn
-        score = -minFoodDist - penalty
-
-        # Phạt hành động đứng yên
+        # Không chọn hành động STOP
         if action == Directions.STOP:
-            score -= 100
+            return -float('inf')
+
+        # Nếu Pacman đụng ma khi không có power => chết
+        if newPos in ghostPositions and power_time == 0:
+            return -1000
+
+        score = successorGameState.getScore()
+
+        # Ăn gần food
+        if newFood:
+            minFoodDist = min(util.manhattanDistance(newPos, foodPos) for foodPos in newFood)
+            score += 10.0 / minFoodDist
+
+        # Tính khoảng cách tới ghost
+        if ghostPositions:
+            minGhostDist = min(util.manhattanDistance(newPos, g) for g in ghostPositions)
+            if power_time > 0:
+                # Còn power => đến gần ghost
+                score += 20.0 / (minGhostDist + 1)
+            else:
+                # Không có power => tránh xa ghost
+                score -= 10.0 / (minGhostDist + 1)
 
         return score
-
 
 
 class LeftTurnAgent(game.Agent):

@@ -15,7 +15,7 @@
 from graphicsUtils import *
 import math, time
 from game import Directions
-
+import pygame
 ###########################
 #  GRAPHICS DISPLAY CODE  #
 ###########################
@@ -213,13 +213,29 @@ class PacmanGraphics:
 
     def drawAgentObjects(self, state):
         self.agentImages = []  # (agentState, image)
+
         for index, agent in enumerate(state.agentStates):
             if agent.isPacman:
                 image = self.drawPacman(agent, index)
                 self.agentImages.append((agent, image))
+
+                # === Vẽ powerTimer nếu đang còn hiệu lực ===
+                if hasattr(agent, 'powerTimer') and agent.powerTimer > 0:
+                    x, y = self.toPixelCoords(agent.getPosition()[0], agent.getPosition()[1])
+
+                    if not hasattr(self, 'font'):
+                        pygame.font.init()
+                        self.font = pygame.font.SysFont('Arial', 18, bold=True)
+
+                    timer_text = self.font.render(str(agent.powerTimer), True, (0, 255, 0))
+                    self.screen.blit(timer_text, (x, y - 20))
+                    pygame.display.update()
+
             else:
                 image = self.drawGhost(agent, index)
                 self.agentImages.append((agent, image))
+            print("Pacman powerTimer:", agent.powerTimer)
+
         refresh()
 
     def swapImages(self, agentIndex, newState):
@@ -261,6 +277,10 @@ class PacmanGraphics:
         grid_height = (height - 1) * self.gridSize
         screen_width = 2 * self.gridSize + grid_width
         screen_height = 2 * self.gridSize + grid_height + INFO_PANE_HEIGHT
+
+        import pygame
+        pygame.init()
+        self.screen = pygame.display.set_mode((int(screen_width), int(screen_height)))
 
         begin_graphics(screen_width,
                        screen_height,
