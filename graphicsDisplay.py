@@ -1,27 +1,8 @@
-# graphicsDisplay.py
-# ------------------
-# Licensing Information:  You are free to use or extend these projects for
-# educational purposes provided that (1) you do not distribute or publish
-# solutions, (2) you retain this notice, and (3) you provide clear
-# attribution to UC Berkeley, including a link to http://ai.berkeley.edu.
-# 
-# Attribution Information: The Pacman AI projects were developed at UC Berkeley.
-# The core projects and autograders were primarily created by John DeNero
-# (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
-# Student side autograding was added by Brad Miller, Nick Hay, and
-# Pieter Abbeel (pabbeel@cs.berkeley.edu).
-
-
+# Xay dựng giao diện đồ họa cho Pacman
 from graphicsUtils import *
 import math, time
 from game import Directions
 import pygame
-###########################
-#  GRAPHICS DISPLAY CODE  #
-###########################
-
-# Most code by Dan Klein and John Denero written or rewritten for cs188, UC Berkeley.
-# Some code from a Pacman implementation by LiveWires, and used / modified with permission.
 
 DEFAULT_GRID_SIZE = 30.0
 INFO_PANE_HEIGHT = 35
@@ -62,21 +43,16 @@ GHOST_VEC_COLORS = [colorToVector(c) for c in GHOST_COLORS]
 
 PACMAN_COLOR = formatColor(255.0 / 255.0, 255.0 / 255.0, 61.0 / 255)
 PACMAN_SCALE = 0.5
-# pacman_speed = 0.25
 
-# Food
 FOOD_COLOR = formatColor(1, 1, 1)
 FOOD_SIZE = 0.1
 
-# Laser
 LASER_COLOR = formatColor(1, 0, 0)
 LASER_SIZE = 0.02
 
-# Capsule graphics
 CAPSULE_COLOR = formatColor(1, 1, 1)
 CAPSULE_SIZE = 0.25
 
-# Drawing walls
 WALL_RADIUS = 0.15
 
 class InfoPane:
@@ -91,9 +67,6 @@ class InfoPane:
         self.drawPane()
 
     def toScreen(self, pos, y=None):
-        """
-          Translates a point relative from the bottom left of the info pane.
-        """
         if y == None:
             x, y = pos
         else:
@@ -171,13 +144,9 @@ class PacmanGraphics:
     def initialize(self, state, isBlue=False):
         self.isBlue = isBlue
         self.startGraphics(state)
-
-        # self.drawDistributions(state)
-        self.distributionImages = None  # Initialized lazily
+        self.distributionImages = None  
         self.drawStaticObjects(state)
         self.drawAgentObjects(state)
-
-        # Information
         self.previousState = state
 
     def startGraphics(self, state):
@@ -224,12 +193,12 @@ class PacmanGraphics:
                     x, y = self.toPixelCoords(agent.getPosition()[0], agent.getPosition()[1])
 
                     if not hasattr(self, 'font'):
+                        import pygame
                         pygame.font.init()
                         self.font = pygame.font.SysFont('Arial', 18, bold=True)
 
                     timer_text = self.font.render(str(agent.powerTimer), True, (0, 255, 0))
                     self.screen.blit(timer_text, (x, y - 20))
-                    pygame.display.update()
 
             else:
                 image = self.drawGhost(agent, index)
@@ -277,10 +246,6 @@ class PacmanGraphics:
         grid_height = (height - 1) * self.gridSize
         screen_width = 2 * self.gridSize + grid_width
         screen_height = 2 * self.gridSize + grid_height + INFO_PANE_HEIGHT
-
-        import pygame
-        pygame.init()
-        self.screen = pygame.display.set_mode((int(screen_width), int(screen_height)))
 
         begin_graphics(screen_width,
                        screen_height,
@@ -622,9 +587,6 @@ class PacmanGraphics:
         remove_from_screen(capsuleImages[(x, y)])
 
     def drawExpandedCells(self, cells):
-        """
-        Draws an overlay of expanded grid positions for search agents
-        """
         n = float(len(cells))
         baseColor = [1.0, 0.0, 0.0]
         self.clearExpandedCells()
@@ -646,8 +608,6 @@ class PacmanGraphics:
                 remove_from_screen(cell)
 
     def updateDistributions(self, distributions):
-        "Draws an agent's belief distributions"
-        # copy all distributions so we don't change their state
         distributions = map(lambda x: x.copy(), distributions)
         if self.distributionImages == None:
             self.drawDistributions(self.previousState)
@@ -678,17 +638,13 @@ class FirstPersonPacmanGraphics(PacmanGraphics):
 
         self.isBlue = isBlue
         PacmanGraphics.startGraphics(self, state)
-        # Initialize distribution images
         walls = state.layout.walls
         dist = []
         self.layout = state.layout
-
-        # Draw the rest
-        self.distributionImages = None  # initialize lazily
+        self.distributionImages = None  
         self.drawStaticObjects(state)
         self.drawAgentObjects(state)
 
-        # Information
         self.previousState = state
 
     def lookAhead(self, config, state):
@@ -696,7 +652,6 @@ class FirstPersonPacmanGraphics(PacmanGraphics):
             return
         else:
             pass
-            # Draw relevant ghosts
             allGhosts = state.getGhostStates()
             visibleGhosts = state.getVisibleGhosts()
             for i, ghost in enumerate(allGhosts):
@@ -717,19 +672,12 @@ class FirstPersonPacmanGraphics(PacmanGraphics):
 def add(x, y):
     return (x[0] + y[0], x[1] + y[1])
 
-# Saving graphical output
-# -----------------------
-# Note: to make an animated gif from this postscript output, try the command:
-# convert -delay 7 -loop 1 -compress lzw -layers optimize frame* out.gif
-# convert is part of imagemagick (freeware)
-
 SAVE_POSTSCRIPT = False
 POSTSCRIPT_OUTPUT_DIR = 'frames'
 FRAME_NUMBER = 0
 import os
 
 def saveFrame():
-    "Saves the current graphical output as a postscript file"
     global SAVE_POSTSCRIPT, FRAME_NUMBER, POSTSCRIPT_OUTPUT_DIR
     if not SAVE_POSTSCRIPT: return
     if not os.path.exists(POSTSCRIPT_OUTPUT_DIR): os.mkdir(POSTSCRIPT_OUTPUT_DIR)

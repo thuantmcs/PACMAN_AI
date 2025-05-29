@@ -1,32 +1,16 @@
-
-
 from util import *
 import time
 import os
 import traceback
 import sys
 
-#######################
-# Parts worth reading #
-#######################
-
 
 class Agent:
-    """
-    An agent must define a getAction method, but may also define the
-    following methods which will be called if they exist:
-
-    def registerInitialState(self, state): # inspects the starting state
-    """
 
     def __init__(self, index=0):
         self.index = index
 
     def getAction(self, state):
-        """
-        The Agent will receive a GameState (from either {pacman, capture, sonar}.py) and
-        must return an action from Directions.{North, South, East, West, Stop}
-        """
         raiseNotDefined()
 
 class Directions:
@@ -51,13 +35,6 @@ class Directions:
                STOP: STOP}
 
 class Configuration:
-    """
-    A Configuration holds the (x,y) coordinate of a character, along with its
-    traveling direction.
-
-    The convention for positions, like a graph, is that (0,0) is the lower left corner, x increases
-    horizontally and y increases vertically.  Therefore, north is the direction of increasing y, or (0,1).
-    """
 
     def __init__(self, pos, direction):
         self.pos = pos
@@ -87,13 +64,6 @@ class Configuration:
         return "(x,y)=" + str(self.pos) + ", " + str(self.direction)
 
     def generateSuccessor(self, vector):
-        """
-        Generates a new configuration reached by translating the current
-        configuration by the action vector.  This is a low-level call and does
-        not attempt to respect the legality of the movement.
-
-        Actions are movement vectors.
-        """
         x, y = self.pos
         dx, dy = vector
         direction = Actions.vectorToDirection(vector)
@@ -102,9 +72,6 @@ class Configuration:
         return Configuration((x + dx, y + dy), direction)
 
 class AgentState:
-    """
-    AgentStates hold the state of an agent (configuration, speed, scared, etc).
-    """
 
     def __init__(self, startConfiguration, isPacman):
         self.powerTimer = 0
@@ -112,6 +79,7 @@ class AgentState:
         self.configuration = startConfiguration
         self.isPacman = isPacman
         self.scaredTimer = 0
+        self.powerTimer = 0
         # state below potentially used for contest only
         self.numCarrying = 0
         self.numReturned = 0
@@ -147,13 +115,6 @@ class AgentState:
         return self.configuration.getDirection()
 
 class Grid:
-    """
-    A 2-dimensional array of objects backed by a list of lists.  Data is accessed
-    via grid[x][y] where (x,y) are positions on a Pacman map with x horizontal,
-    y vertical and the origin (0,0) in the bottom left corner.
-
-    The __str__ method constructs an output that is oriented like a pacman board.
-    """
 
     def __init__(self, width, height, initialValue=False, bitRepresentation=None):
         if initialValue not in [False, True]:
@@ -220,11 +181,6 @@ class Grid:
         return list
 
     def packBits(self):
-        """
-        Returns an efficient int list representation
-
-        (width, height, bitPackedInts...)
-        """
         bits = [self.width, self.height]
         currentInt = 0
         for i in range(self.height * self.width):
@@ -244,9 +200,6 @@ class Grid:
         return x, y
 
     def _unpackBits(self, bits):
-        """
-        Fills in data from a bit-level representation
-        """
         cell = 0
         for packed in bits:
             for bit in self._unpackInt(packed, self.CELLS_PER_INT):
@@ -275,16 +228,8 @@ def reconstituteGrid(bitRep):
     width, height = bitRep[:2]
     return Grid(width, height, bitRepresentation=bitRep[2:])
 
-####################################
-# Parts you shouldn't have to read #
-####################################
-
-
 class Actions:
-    """
-    A collection of static methods for manipulating move actions.
-    """
-    # Directions
+
     _directions = {Directions.WEST: (-1, 0),
                    Directions.STOP: (0, 0),
                    Directions.EAST: (1, 0),
@@ -376,9 +321,6 @@ class Actions:
 class GameStateData:
 
     def __init__(self, prevState=None):
-        """
-        Generates a new data packet by copying information from its predecessor.
-        """
         if prevState != None:
             self.food = prevState.food.shallowCopy()
             self.capsules = prevState.capsules[:]
@@ -412,9 +354,6 @@ class GameStateData:
         return copiedStates
 
     def __eq__(self, other):
-        """
-        Allows two states to be compared.
-        """
         if other == None:
             return False
         # TODO Check for type of other
@@ -429,9 +368,6 @@ class GameStateData:
         return True
 
     def __hash__(self):
-        """
-        Allows states to be keys of dictionaries.
-        """
         for i, state in enumerate(self.agentStates):
             try:
                 int(hash(state))
@@ -496,9 +432,6 @@ class GameStateData:
         return 'E'
 
     def initialize(self, layout, numGhostAgents):
-        """
-        Creates an initial game state from a layout array (see layout.py).
-        """
         self.food = layout.food.copy()
         # self.capsules = []
         self.capsules = layout.capsules[:]
@@ -520,10 +453,6 @@ class GameStateData:
 
 
 class Game:
-    """
-    The Game manages the control flow, soliciting actions from agents.
-    """
-
     def __init__(self, agents, display, rules, startingIndex=0, muteAgents=False, catchExceptions=False):
         self.agentCrashed = False
         self.agents = agents
@@ -571,25 +500,16 @@ class Game:
         if not self.muteAgents:
             return
         global OLD_STDOUT, OLD_STDERR
-        # Revert stdout/stderr to originals
         sys.stdout = OLD_STDOUT
         sys.stderr = OLD_STDERR
 
     def run(self):
-        """
-        Main control loop for game play.
-        """
         self.display.initialize(self.state.data)
         self.numMoves = 0
-
-        # self.display.initialize(self.state.makeObservation(1).data)
-        # inform learning agents of the game start
         for i in range(len(self.agents)):
             agent = self.agents[i]
             if not agent:
                 self.mute(i)
-                # this is a null agent, meaning it failed to load
-                # the other team wins
                 print("Agent %d failed to load" % i, file=sys.stderr)
                 self.unmute()
                 self._agentCrash(i, quiet=True)
@@ -618,18 +538,17 @@ class Game:
                         return
                 else:
                     agent.registerInitialState(self.state.deepCopy())
-                # TODO: could this exceed the total time
                 self.unmute()
 
         agentIndex = self.startingIndex
         numAgents = len(self.agents)
 
         while not self.gameOver:
-            # Fetch the next agent
+
             agent = self.agents[agentIndex]
             move_time = 0
             skip_action = False
-            # Generate an observation of the state
+
             if 'observationFunction' in dir(agent):
                 self.mute(agentIndex)
                 if self.catchExceptions:
@@ -654,7 +573,6 @@ class Game:
             else:
                 observation = self.state.deepCopy()
 
-            # Solicit an action
             action = None
             self.mute(agentIndex)
             if self.catchExceptions:
@@ -689,7 +607,7 @@ class Game:
                             return
 
                     self.totalAgentTimes[agentIndex] += move_time
-                    # print "Agent: %d, time: %f, total: %f" % (agentIndex, move_time, self.totalAgentTimes[agentIndex])
+                 
                     if self.totalAgentTimes[agentIndex] > self.rules.getMaxTotalTime(agentIndex):
                         print("Agent %d ran out of time! (time: %1.2f)" % (
                                 agentIndex, self.totalAgentTimes[agentIndex]), file=sys.stderr)
@@ -706,7 +624,6 @@ class Game:
                 action = agent.getAction(observation)
             self.unmute()
 
-            # Execute the action
             self.moveHistory.append((agentIndex, action))
             if self.catchExceptions:
                 try:
@@ -720,22 +637,14 @@ class Game:
             else:
                 self.state = self.state.generateSuccessor(agentIndex, action)
 
-            # Change the display
-            self.display.update(self.state.data)
-            ###idx = agentIndex - agentIndex % 2 + 1
-            ###self.display.update( self.state.makeObservation(idx).data )
 
-            # Allow for game specific conditions (winning, losing, etc.)
+            self.display.update(self.state.data)
+
             self.rules.process(self.state, self)
-            # Track progress
             if agentIndex == numAgents + 1:
                 self.numMoves += 1
-            # Next agent
             agentIndex = (agentIndex + 1) % numAgents
 
-
-
-        # inform a learning agent of the game result
         for agentIndex, agent in enumerate(self.agents):
             if "final" in dir(agent):
                 try:

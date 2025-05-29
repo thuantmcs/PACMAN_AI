@@ -1,17 +1,4 @@
-# graphicsUtils.py
-# ----------------
-# Licensing Information:  You are free to use or extend these projects for
-# educational purposes provided that (1) you do not distribute or publish
-# solutions, (2) you retain this notice, and (3) you provide clear
-# attribution to UC Berkeley, including a link to http://ai.berkeley.edu.
-# 
-# Attribution Information: The Pacman AI projects were developed at UC Berkeley.
-# The core projects and autograders were primarily created by John DeNero
-# (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
-# Student side autograding was added by Brad Miller, Nick Hay, and
-# Pieter Abbeel (pabbeel@cs.berkeley.edu).
-
-
+# Thư viện đồ họa dùng trong Pacman
 import sys
 import math
 import random
@@ -21,15 +8,15 @@ import types
 import tkinter
 import os.path
 
-_Windows = sys.platform == 'win32'  # True if on Win95/98/NT
+_Windows = sys.platform == 'win32'
 
-_root_window = None  # The root window for graphics output
-_canvas = None  # The canvas which holds graphics
-_canvas_xs = None  # Size of canvas object
+_root_window = None 
+_canvas = None 
+_canvas_xs = None  
 _canvas_ys = None
-_canvas_x = None  # Current position on canvas
+_canvas_x = None  
 _canvas_y = None
-_canvas_col = None  # Current colour (set to black below)
+_canvas_col = None 
 _canvas_tsize = 12
 _canvas_tserifs = 0
 
@@ -43,7 +30,7 @@ if _Windows:
     _canvas_tfonts = ['times new roman', 'lucida console']
 else:
     _canvas_tfonts = ['times', 'lucidasans-24']
-    pass  # XXX need defaults here
+    pass 
 
 def sleep(secs):
     global _root_window
@@ -57,23 +44,19 @@ def sleep(secs):
 def begin_graphics(width=640, height=480, color=formatColor(0, 0, 0), title=None):
     global _root_window, _canvas, _canvas_x, _canvas_y, _canvas_xs, _canvas_ys, _bg_color
 
-    # Check for duplicate call
+
     if _root_window is not None:
-        # Lose the window.
         _root_window.destroy()
 
-    # Save the canvas size parameters
     _canvas_xs, _canvas_ys = width - 1, height - 1
     _canvas_x, _canvas_y = 0, _canvas_ys
     _bg_color = color
 
-    # Create the root window
     _root_window = tkinter.Tk()
     _root_window.protocol('WM_DELETE_WINDOW', _destroy_window)
     _root_window.title(title or 'Graphics Window')
     _root_window.resizable(0, 0)
 
-    # Create the canvas object
     try:
         _canvas = tkinter.Canvas(_root_window, width=width, height=height)
         _canvas.pack()
@@ -83,7 +66,6 @@ def begin_graphics(width=640, height=480, color=formatColor(0, 0, 0), title=None
         _root_window = None
         raise
 
-    # Bind to key-down and key-up events
     _root_window.bind("<KeyPress>", _keypress)
     _root_window.bind("<KeyRelease>", _keyrelease)
     _root_window.bind("<FocusIn>", _clear_keys)
@@ -136,11 +118,6 @@ def draw_background():
 def _destroy_window(event=None):
     sys.exit(0)
 
-#    global _root_window
-#    _root_window.destroy()
-#    _root_window = None
-# print("DESTROY")
-
 def end_graphics():
     global _root_window, _canvas, _mouse_enabled
     try:
@@ -171,7 +148,7 @@ def polygon(coords, outlineColor, fillColor=None, filled=1, smoothed=1, behind=0
     if filled == 0: fillColor = ""
     poly = _canvas.create_polygon(c, outline=outlineColor, fill=fillColor, smooth=smoothed, width=width)
     if behind > 0:
-        _canvas.tag_lower(poly, behind)  # Higher should be more visible
+        _canvas.tag_lower(poly, behind)
     return poly
 
 def square(pos, r, color, filled=1, behind=0):
@@ -194,7 +171,6 @@ def circle(pos, r, outlineColor, fillColor=None, endpoints=None, style='pieslice
 
 def image(pos, file="../../blueghost.gif"):
     x, y = pos
-    # img = PhotoImage(file=file)
     return _canvas.create_image(x, y, image=tkinter.PhotoImage(file=file), anchor=tkinter.NW)
 
 def refresh():
@@ -204,8 +180,6 @@ def moveCircle(id, pos, r, endpoints=None):
     global _canvas_x, _canvas_y
 
     x, y = pos
-    #    x0, x1 = x - r, x + r + 1
-    #    y0, y1 = y - r, y + r + 1
     x0, x1 = x - r - 1, x + r
     y0, y1 = y - r - 1, y + r
     if endpoints == None:
@@ -242,29 +216,19 @@ def line(here, there, color=formatColor(0, 0, 0), width=2):
     x1, y1 = there[0], there[1]
     return _canvas.create_line(x0, y0, x1, y1, fill=color, width=width)
 
-##############################################################################
-### Keypress handling ########################################################
-##############################################################################
-
-# We bind to key-down and key-up events.
-
 _keysdown = {}
 _keyswaiting = {}
-# This holds an unprocessed key release.  We delay key releases by up to
-# one call to keys_pressed() to get round a problem with auto repeat.
+
 _got_release = None
 
 def _keypress(event):
     global _got_release
-    # remap_arrows(event)
     _keysdown[event.keysym] = 1
     _keyswaiting[event.keysym] = 1
-    #    print(event.char, event.keycode)
     _got_release = None
 
 def _keyrelease(event):
     global _got_release
-    # remap_arrows(event)
     try:
         del _keysdown[event.keysym]
     except:
@@ -303,8 +267,6 @@ def keys_waiting():
     _keyswaiting = {}
     return keys
 
-# Block for a list of keys...
-
 def wait_for_keys():
     keys = []
     while keys == []:
@@ -335,7 +297,7 @@ def move_to(object, x, y=None,
 
     horiz = True
     newCoords = []
-    current_x, current_y = _canvas.coords(object)[0:2]  # first point
+    current_x, current_y = _canvas.coords(object)[0:2]  
     for coord in _canvas.coords(object):
         if horiz:
             inc = x - current_x

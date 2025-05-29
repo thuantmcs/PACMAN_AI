@@ -5,6 +5,8 @@ import random
 from util import manhattanDistance
 import util
 
+# Lớp cơ sở cho các tác nhân ma
+# Các tác nhân ma sẽ kế thừa từ lớp này
 class GhostAgent(Agent):
 
     def __init__(self, index):
@@ -18,28 +20,24 @@ class GhostAgent(Agent):
             return util.chooseFromDistribution(dist)
 
     def getDistribution(self, state):
-        "Returns a Counter encoding a distribution over actions from the provided state."
         util.raiseNotDefined()
-
+# Di chuyển
 class RandomGhost(GhostAgent):
-    "A ghost that chooses a legal action uniformly at random."
-
     def getDistribution(self, state):
         dist = util.Counter()
         for a in state.getLegalActions(self.index): dist[a] = 1.0
         dist.normalize()
         return dist
 
-class DirectionalGhost(GhostAgent):
-    "A ghost that prefers to rush Pacman, or flee when scared."
 
+# Hành vi 
+class DirectionalGhost(GhostAgent):
     def __init__(self, index, prob_attack=0.8, prob_scaredFlee=0.8):
         self.index = index
         self.prob_attack = prob_attack
         self.prob_scaredFlee = prob_scaredFlee
 
     def getDistribution(self, state):
-        # Read variables from state
         ghostState = state.getGhostState(self.index)
         legalActions = state.getLegalActions(self.index)
         pos = state.getGhostPosition(self.index)
@@ -52,7 +50,6 @@ class DirectionalGhost(GhostAgent):
         newPositions = [(pos[0] + a[0], pos[1] + a[1]) for a in actionVectors]
         pacmanPosition = state.getPacmanPosition()
 
-        # Select best actions given the state
         distancesToPacman = [manhattanDistance(pos, pacmanPosition) for pos in newPositions]
         if isScared:
             bestScore = max(distancesToPacman)
@@ -62,7 +59,6 @@ class DirectionalGhost(GhostAgent):
             bestProb = self.prob_attack
         bestActions = [action for action, distance in zip(legalActions, distancesToPacman) if distance == bestScore]
 
-        # Construct distribution
         dist = util.Counter()
         for a in bestActions: dist[a] = bestProb / len(bestActions)
         for a in legalActions: dist[a] += (1 - bestProb) / len(legalActions)
